@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>부품 장착 QR 사양 검사 시스템 - 터치스크린</title>
+    <title>부품 QR 일치 검사 시스템 - 태블릿 전용</title>
     <!-- Tailwind CSS (브라우저 CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- html5-qrcode (QR 및 바코드 스캔 라이브러리) -->
@@ -12,425 +12,254 @@
       @font-face { font-family: 'GMarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff') format('woff'); font-weight: 300; font-display: swap; }
       @font-face { font-family: 'GMarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff'); font-weight: 500; font-display: swap; }
       @font-face { font-family: 'GMarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff'); font-weight: 700; font-display: swap; }
-      html { font-family: "GMarketSans"; -webkit-tap-highlight-color: transparent; }
-      dialog::backdrop { background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
-      #camera-reader video { border-radius: 0.75rem; object-fit: cover; width: 100% !important; }
-      .scanner-laser { position: absolute; left: 5%; right: 5%; height: 3px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6; animation: scanLaser 2s linear infinite alternate; }
+      html, body { font-family: "GMarketSans"; height: 100%; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+      dialog::backdrop { background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); }
+      #camera-reader video { border-radius: 1rem; object-fit: cover; width: 100% !important; }
+      .scanner-laser { position: absolute; left: 8%; right: 8%; height: 4px; background: #2563eb; box-shadow: 0 0 14px #3b82f6; animation: scanLaser 2s linear infinite alternate; }
       @keyframes scanLaser { 0% { top: 12%; } 100% { top: 88%; } }
-      .touch-active:active { transform: scale(0.97); }
+      .touch-press { user-select: none; transition: transform 0.08s ease, filter 0.08s ease; }
+      .touch-press:active { transform: scale(0.96); filter: brightness(0.92); }
     </style>
   </head>
-  <body class="min-h-screen bg-slate-100 text-slate-800 antialiased flex flex-col select-none">
-    <!-- 상단 글로벌 네비게이션 헤더 -->
-    <header class="sticky top-0 z-40 w-full bg-white border-b border-slate-200 py-3 px-4 sm:px-6 shrink-0 shadow-xs">
-      <div class="max-w-[1560px] mx-auto flex items-center justify-between">
-        <!-- 좌측 로고 & 타이틀 -->
-        <a href="./index.html" class="flex items-center cursor-pointer shrink-0 gap-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-lg flex items-center justify-center shadow-lg shadow-blue-300">P</div>
-          <div>
-            <span class="text-base font-bold text-slate-800">프로젝트 관리</span>
-            <span class="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200">터치 패널 모드</span>
-          </div>
-        </a>
+  <body class="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-900 antialiased flex flex-col p-2.5 sm:p-3 select-none overflow-hidden">
 
-        <!-- 메뉴 네비게이션 -->
-        <nav class="hidden lg:flex items-center gap-5 text-sm font-medium">
-          <a href="./index.html" class="font-bold text-slate-600 hover:text-slate-900 transition-colors py-1">대시보드</a>
-          <a href="./task-manage.html" class="font-bold text-slate-600 hover:text-slate-900 transition-colors py-1">업무현황</a>
-          <a href="./location_check2.html" class="font-bold text-slate-600 hover:text-slate-900 transition-colors py-1">QR위치등록</a>
-          <a href="./QR_maker.html" class="font-bold text-slate-600 hover:text-slate-900 transition-colors py-1">QR생성기</a>
-          <a href="./qr_check_part.html" class="font-bold text-blue-600 border-b-2 border-blue-600 pb-1">부품 QR일치검사</a>
-        </nav>
-
-        <!-- 우측 액션 & 사운드 토글 -->
-        <div class="flex items-center gap-2">
-          <button id="btn-sound-toggle" onclick="window.toggleSound()" class="h-10 px-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-2 touch-active transition-colors">
-            <svg id="icon-sound-on" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-            <span id="txt-sound-state" class="text-xs">효과음 ON</span>
-          </button>
-          <button onclick="window.resetCurrentCheck()" class="h-10 px-3.5 rounded-xl border border-slate-300 bg-white hover:bg-rose-50 hover:text-rose-600 text-slate-700 font-bold text-sm flex items-center gap-1.5 touch-active transition-colors">
-            <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span class="text-xs">초기화</span>
-          </button>
+    <!-- 1. 최상단 컴팩트 헤더 바 (높이 약 50px 고정) -->
+    <header class="w-full bg-white rounded-2xl shadow-xs border border-slate-200 px-3 py-2 flex items-center justify-between shrink-0 mb-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shadow-sm shadow-blue-300">
+          Q
         </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-black text-slate-800 leading-tight">부품 QR 일치 검사</h1>
+          <p class="text-[11px] text-slate-400 font-bold leading-none">태블릿 전용 풀스크린 모드</p>
+        </div>
+      </div>
+
+      <!-- 진행 상황 요약 & 상단 버튼 -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+          <span class="text-xs font-black text-slate-500">일치율</span>
+          <div class="w-24 sm:w-32 bg-slate-200 rounded-full h-3 overflow-hidden">
+            <div id="progress-bar-fill" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="progress-text" class="text-xs sm:text-sm font-black text-emerald-600">0 / 4 (0%)</span>
+        </div>
+
+        <button
+          id="btn-sound-toggle"
+          onclick="window.toggleSound()"
+          class="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 border border-slate-300 touch-press"
+        >
+          <svg id="icon-sound-on" class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <span id="txt-sound-state">효과음</span>
+        </button>
+
+        <button
+          onclick="window.resetCurrentCheck()"
+          class="h-9 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-black text-xs flex items-center gap-1 border border-rose-200 touch-press"
+        >
+          <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>리셋</span>
+        </button>
       </div>
     </header>
 
-    <!-- 메인 컨텐츠 영역 -->
-    <main class="flex-1 max-w-[1560px] w-full mx-auto p-3 sm:p-5 flex flex-col gap-4">
-      
-      <!-- 1. 최상단: 제품 품번 QR 스캔 및 입력 영역 (터치 최적화 대형 카드) -->
-      <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100">
-          <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm">1</span>
-            <h2 class="text-lg sm:text-xl font-bold text-slate-800">조립 제품 품번 선택 및 QR 스캔</h2>
-          </div>
-          <span class="text-xs sm:text-sm text-slate-500 font-medium">바코드 스캐너 건 사용 가능 (스캔 시 자동 조회)</span>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-center">
-          <!-- 제품 품번 입력창 (터치 친화적 대형 인풋) -->
-          <div class="lg:col-span-6 relative">
-            <label for="product-code-input" class="block text-xs font-bold text-slate-500 mb-1.5">조립 대상 제품 품번</label>
-            <div class="relative flex items-center">
-              <input
-                id="product-code-input"
-                type="text"
-                autocomplete="off"
-                placeholder="제품 품번 스캔 또는 직접 입력 (예: PRD-2026-X1)"
-                class="w-full h-14 pl-4 pr-24 rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-none text-base sm:text-lg font-bold uppercase tracking-wider bg-slate-50 focus:bg-white transition-all shadow-inner"
-              />
-              <button
-                onclick="window.clearProductInput()"
-                class="absolute right-2 px-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-600 touch-active"
-              >
-                지우기
-              </button>
-            </div>
-          </div>
-
-          <!-- 상단 조작 버튼 그룹 (카메라 스캔, 조회, 프리셋) -->
-          <div class="lg:col-span-6 flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-end">
-            <!-- QR 카메라 스캔 버튼 -->
-            <button
-              onclick="window.openScannerModal('product')"
-              class="flex-1 min-w-[140px] h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base flex items-center justify-center gap-2 shadow-md shadow-blue-200 touch-active transition-all"
-            >
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              <span>제품 QR 촬영</span>
-            </button>
-
-            <!-- 품번 로드 버튼 -->
-            <button
-              onclick="window.loadProductParts()"
-              class="h-14 px-5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-base flex items-center justify-center gap-1.5 touch-active transition-all shrink-0"
-            >
-              <span>품번 적용</span>
-            </button>
-
-            <!-- 빠른 샘플 선택 드롭다운 버튼 -->
-            <div class="relative w-full sm:w-auto">
-              <button
-                id="btn-sample-preset"
-                onclick="window.togglePresetMenu()"
-                class="w-full sm:w-auto h-14 px-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-slate-400 bg-slate-50 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 touch-active transition-colors shrink-0"
-              >
-                <span>예시 품번 불러오기</span>
-                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              <div id="preset-dropdown" class="hidden absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-30 p-1.5">
-                <button onclick="window.selectPreset('PRD-2026-X1')" class="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 text-xs font-bold text-slate-700">PRD-2026-X1 (스마트폰 메인보드)</button>
-                <button onclick="window.selectPreset('PRD-2026-A2')" class="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 text-xs font-bold text-slate-700">PRD-2026-A2 (차량용 인포테인먼트)</button>
-                <button onclick="window.selectPreset('PRD-2026-C3')" class="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 text-xs font-bold text-slate-700">PRD-2026-C3 (산업용 제어 모듈)</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 현재 선택된 제품 상세 정보 요약 바 -->
-        <div id="product-info-bar" class="mt-4 p-3.5 bg-blue-50/70 rounded-xl border border-blue-200 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-            <div>
-              <span class="text-xs text-blue-700 font-semibold">선택 제품명:</span>
-              <span id="current-prod-name" class="ml-1 text-sm sm:text-base font-bold text-blue-950">PRD-2026-X1 스마트폰 메인 메카 모듈</span>
-            </div>
-            <span class="text-xs text-slate-400">|</span>
-            <span class="text-xs text-slate-600 font-medium">관리코드: <strong id="current-prod-id" class="text-slate-900 font-bold">PRD-2026-X1</strong></span>
-          </div>
-
-          <!-- 조립 검사 진행률 -->
-          <div class="flex items-center gap-3 w-full sm:w-auto">
-            <span class="text-xs font-bold text-slate-600">장착 일치 진행현황</span>
-            <div class="w-32 bg-slate-200 rounded-full h-3.5 overflow-hidden">
-              <div id="progress-bar-fill" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <span id="progress-text" class="text-sm font-extrabold text-blue-700">0 / 4 (0%)</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. 하위: 장착해야 할 부품 리스트 및 실시간 일치/불일치 검사 섹션 -->
-      <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 flex-1 flex flex-col">
-        <!-- 리스트 헤더 및 컨트롤 바 -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-100">
-          <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">2</span>
-            <div>
-              <h3 class="text-lg sm:text-xl font-bold text-slate-800">장착 대상 부품 목록 및 QR 일치 검사</h3>
-              <p class="text-xs text-slate-500 font-medium">부품의 QR코드를 스캔하여 요구 사양과의 일치 여부를 즉시 검증합니다.</p>
-            </div>
-          </div>
-
-          <!-- 연속 스캔 & 전체 검사 버튼 -->
-          <div class="flex items-center gap-2">
-            <button
-              onclick="window.openScannerModal('part-auto')"
-              class="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 touch-active shadow-sm shadow-emerald-200 transition-colors"
-            >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              <span>부품 연속 QR 스캔</span>
-            </button>
-            <button
-              onclick="window.resetOnlyPartStatus()"
-              class="h-11 px-3.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-600 font-bold text-xs flex items-center gap-1.5 touch-active transition-colors"
-            >
-              <span>검사 결과만 리셋</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 실시간 스캔 입력창 (바코드 스캐너 건 전용 포커스 인풋) -->
-        <div class="mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col md:flex-row items-stretch md:items-center gap-3">
-          <div class="flex items-center gap-2 text-slate-700 font-bold text-sm shrink-0">
-            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-            <span>현장 스캐너 건 입력:</span>
-          </div>
-          <div class="flex-1 flex gap-2">
-            <input
-              id="part-barcode-gun-input"
-              type="text"
-              autocomplete="off"
-              placeholder="스캐너 건으로 부품 QR을 찍거나 품번 직접 입력 후 [검사] 클릭"
-              class="flex-1 h-11 px-3.5 rounded-lg border border-slate-300 focus:border-emerald-600 focus:outline-none text-sm font-bold bg-white"
-            />
-            <button
-              onclick="window.verifyPartByInput()"
-              class="h-11 px-5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm touch-active shrink-0 transition-colors"
-            >
-              검사 확인
-            </button>
-          </div>
-          <div class="text-xs text-slate-500 font-medium self-center">
-            * 리더기 스캔 시 엔터(Enter)가 자동 전송되어 일치 여부를 판단합니다.
-          </div>
-        </div>
-
-        <!-- 부품 리스트 컨테이너 (터치하기 쉬운 반응형 카드 및 테이블 형태) -->
-        <div class="flex-1 overflow-x-auto">
-          <!-- 모바일/태블릿 카드 리스트 뷰 -->
-          <div id="part-card-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5">
-            <!-- JavaScript에서 동적으로 렌더링 -->
-          </div>
-        </div>
-
-        <!-- 하단 검사 완료 요약 배너 (모든 부품 일치 시 축하 배너) -->
-        <div id="all-pass-banner" class="hidden mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">✓</div>
-            <div>
-              <h4 class="text-base sm:text-lg font-bold">모든 장착 부품 사양 일치 검증 완료!</h4>
-              <p class="text-xs sm:text-sm text-emerald-100">모든 부품이 기준 사양과 정상 일치합니다. 다음 조립 공정으로 이동할 수 있습니다.</p>
-            </div>
-          </div>
-          <button onclick="window.finishAssemblyProcess()" class="h-11 px-5 rounded-xl bg-white text-emerald-800 font-bold text-sm shadow-md hover:bg-emerald-50 touch-active shrink-0 transition-colors">
-            공정 완료 승인
+    <!-- 2. 제품 품번 선택 및 상태 바 (높이 약 64px 고정) -->
+    <section class="w-full bg-white rounded-2xl p-2.5 sm:p-3 shadow-xs border border-slate-200 shrink-0 mb-2 flex items-center justify-between gap-2 sm:gap-3">
+      <!-- 제품 품번 인풋/표시창 -->
+      <div class="flex-1 flex items-center gap-2">
+        <span class="text-xs font-black text-slate-500 whitespace-nowrap hidden md:inline">제품품번:</span>
+        <div class="relative flex-1">
+          <input
+            id="product-code-input"
+            type="text"
+            autocomplete="off"
+            placeholder="제품 품번 스캔"
+            class="w-full h-11 pl-3 pr-10 rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-none text-base sm:text-lg font-black uppercase tracking-wider bg-slate-50 focus:bg-white text-slate-900"
+          />
+          <button
+            onclick="window.clearProductInput()"
+            class="absolute right-2 top-1.5 w-8 h-8 rounded-lg bg-slate-200 text-slate-600 font-bold flex items-center justify-center touch-press text-sm"
+          >
+            ✕
           </button>
         </div>
+      </div>
 
-      </section>
+      <!-- 현재 로드된 제품명 표시 -->
+      <div class="hidden lg:flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-200">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+        <span id="current-prod-name" class="text-xs sm:text-sm font-black text-blue-950 truncate max-w-[280px]">PRD-2026-X1 스마트폰 모듈</span>
+      </div>
+
+      <!-- 상단 액션 버튼 (제품 QR 스캔 & 제품 변경) -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          onclick="window.openScannerModal('product')"
+          class="h-11 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex items-center gap-1.5 shadow-sm touch-press"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          </svg>
+          <span>제품 QR스캔</span>
+        </button>
+
+        <button
+          onclick="window.openProductSelectModal()"
+          class="h-11 px-3 sm:px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-black text-sm flex items-center gap-1.5 touch-press"
+        >
+          <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span class="hidden sm:inline">품번목록</span>
+        </button>
+
+        <button
+          onclick="window.openScannerModal('part-auto')"
+          class="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm flex items-center gap-1.5 shadow-sm touch-press"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          </svg>
+          <span>부품 연속스캔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 메인 부품 검사 영역 (스크롤 없이 화면 100% 핏: flex-1 min-h-0) -->
+    <main class="w-full flex-1 min-h-0 bg-white rounded-2xl p-2.5 sm:p-3 shadow-xs border border-slate-200 flex flex-col overflow-hidden">
+      
+      <!-- 부품 카드 컨테이너 (스크롤 없이 태블릿 화면에 자동 분할 핏) -->
+      <div id="part-cards-container" class="w-full h-full grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 overflow-hidden">
+        <!-- 동적으로 렌더링 -->
+      </div>
+
     </main>
 
-    <!-- 스캐너 공통 모달 (html5-qrcode 카메라 스캔) -->
-    <dialog id="scanner-modal" class="rounded-2xl p-0 shadow-2xl border-0 overflow-hidden w-[95%] max-w-lg bg-white">
+    <!-- 4. 하단 모든 부품 일치 완료 축하 배너 (완료 시만 오버레이 표시) -->
+    <div id="complete-banner" class="hidden fixed inset-x-4 bottom-4 z-40 p-4 rounded-2xl bg-emerald-600 text-white shadow-2xl flex items-center justify-between gap-3 border-2 border-emerald-400">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl font-black shrink-0">✓</div>
+        <div>
+          <h3 class="text-lg sm:text-xl font-black">모든 장착 부품 사양 일치 완료!</h3>
+          <p class="text-xs sm:text-sm text-emerald-100 font-bold">전체 규격이 100% 검증되었습니다. 다음 공정으로 이동하세요.</p>
+        </div>
+      </div>
+      <button
+        onclick="window.confirmNextStage()"
+        class="h-12 px-6 rounded-xl bg-white text-emerald-800 font-black text-sm sm:text-base shadow-md hover:bg-emerald-50 touch-press whitespace-nowrap"
+      >
+        공정 완료 승인
+      </button>
+    </div>
+
+    <!-- 스캐너 공통 모달 -->
+    <dialog id="scanner-modal" class="rounded-3xl p-0 shadow-2xl border-0 overflow-hidden w-[95%] max-w-lg bg-white">
       <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span id="scanner-modal-title" class="text-base font-bold">QR 코드 스캔</span>
+          <div class="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="scanner-modal-title" class="text-lg font-black">QR 코드 스캔</span>
         </div>
-        <button onclick="window.closeScannerModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center text-lg font-bold touch-active">✕</button>
+        <button
+          onclick="window.closeScannerModal()"
+          class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center text-xl font-black touch-press"
+        >
+          ✕
+        </button>
       </div>
 
-      <div class="p-4 sm:p-6 flex flex-col items-center">
-        <!-- 카메라 비디오 영역 -->
-        <div class="relative w-full aspect-square max-w-[340px] bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 flex items-center justify-center shadow-inner">
+      <div class="p-4 flex flex-col items-center">
+        <div class="relative w-full aspect-square max-w-[300px] bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 flex items-center justify-center shadow-inner">
           <div id="camera-reader" class="w-full h-full"></div>
           <div class="scanner-laser pointer-events-none"></div>
-          <div class="absolute inset-0 border-2 border-white/20 pointer-events-none rounded-2xl"></div>
-          <!-- 조준 가이드 박스 -->
           <div class="absolute w-44 h-44 border-2 border-dashed border-emerald-400 rounded-xl pointer-events-none flex items-center justify-center">
-            <span class="text-[11px] text-white/80 bg-black/60 px-2 py-1 rounded">QR코드를 사각형 안에 맞추세요</span>
+            <span class="text-[11px] font-bold text-white bg-black/70 px-2 py-1 rounded-md">QR을 사각형 안에 맞추세요</span>
           </div>
         </div>
 
-        <p id="scanner-modal-desc" class="mt-3 text-xs sm:text-sm text-slate-500 text-center font-medium">카메라 렌즈를 제품 또는 부품의 QR 코드에 비춰주세요.</p>
+        <p id="scanner-modal-desc" class="mt-3 text-sm font-bold text-slate-700 text-center">QR 코드를 카메라에 비춰주세요.</p>
 
-        <!-- 카메라 전환 또는 테스트 시뮬레이션 버튼 -->
-        <div class="mt-4 w-full flex flex-col gap-2">
-          <div class="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
-            <span>스캔 테스트용 원클릭 시뮬레이션:</span>
-          </div>
-          <div id="scanner-simulate-buttons" class="flex flex-wrap gap-2">
-            <!-- 동적으로 상황에 맞는 테스트 버튼 생성 -->
-          </div>
+        <!-- 원클릭 테스트 시뮬레이션 -->
+        <div class="mt-3 w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div class="text-[11px] font-black text-slate-500 mb-1.5">테스트 시뮬레이션:</div>
+          <div id="scanner-simulate-buttons" class="grid grid-cols-2 gap-1.5"></div>
         </div>
       </div>
 
-      <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
-        <button onclick="window.closeScannerModal()" class="h-11 px-6 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm touch-active transition-colors">
+      <div class="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
+        <button
+          onclick="window.closeScannerModal()"
+          class="w-full h-11 rounded-xl bg-slate-300 hover:bg-slate-400 text-slate-800 font-black text-sm touch-press"
+        >
           닫기
         </button>
       </div>
     </dialog>
 
-    <!-- 검사 결과 알림 토스트 팝업 (터치스크린 시각적 알림) -->
-    <div id="result-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-base flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
-      <div id="toast-icon" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-lg"></div>
+    <!-- 제품 목록 선택 모달 -->
+    <dialog id="product-select-modal" class="rounded-3xl p-0 shadow-2xl border-0 overflow-hidden w-[95%] max-w-md bg-white">
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <h3 class="text-lg font-black">제품 품번 선택</h3>
+        <button
+          onclick="window.closeProductSelectModal()"
+          class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center text-xl font-black touch-press"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="p-4 flex flex-col gap-2.5" id="product-list-options"></div>
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button
+          onclick="window.closeProductSelectModal()"
+          class="w-full h-11 rounded-xl bg-slate-200 text-slate-700 font-black text-sm touch-press"
+        >
+          취소
+        </button>
+      </div>
+    </dialog>
+
+    <!-- 토스트 알림창 -->
+    <div
+      id="result-toast"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-black text-base flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none translate-y-4"
+    >
+      <div id="toast-icon" class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-xl"></div>
       <div id="toast-message" class="text-sm sm:text-base"></div>
     </div>
 
     <!-- 스크립트 영역 -->
     <script>
-      // 1. 제품 및 장착 부품 사양 마스터 데이터베이스 (샘플 데이터)
+      // 1. 제품 및 부품 마스터 DB
       const PRODUCT_DATABASE = {
         'PRD-2026-X1': {
-          productName: 'PRD-2026-X1 스마트폰 메인 메카 모듈',
-          category: '전자/통신',
+          productName: 'PRD-2026-X1 스마트폰 모듈',
           parts: [
-            {
-              id: 'PART-01',
-              name: 'AP 메인 프로세서 칩',
-              expectedCode: 'PART-AP-8890-KR',
-              spec: 'Octa-Core 3.2GHz / 4nm FinFET',
-              location: 'LOC-PCB-U101',
-              qty: 1,
-              status: 'READY', // 'READY', 'PASS', 'FAIL'
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-02',
-              name: 'LPDDR5X 메모리 모듈',
-              expectedCode: 'PART-RAM-16GB-X',
-              spec: '16GB LPDDR5X 8533Mbps',
-              location: 'LOC-PCB-U202',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-03',
-              name: 'UFS 4.0 플래시 스토리지',
-              expectedCode: 'PART-SSD-512GB-4',
-              spec: '512GB UFS 4.0 Dual Lane',
-              location: 'LOC-PCB-U303',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-04',
-              name: '전력 관리 IC (PMIC)',
-              expectedCode: 'PART-PMIC-990-P',
-              spec: 'Multi-Rail High Efficiency PMIC',
-              location: 'LOC-PCB-U404',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            }
+            { id: 'P1', name: 'AP 프로세서', expectedCode: 'PART-AP-8890', location: 'U101', status: 'READY', scannedCode: null },
+            { id: 'P2', name: '16GB RAM', expectedCode: 'PART-RAM-16G', location: 'U202', status: 'READY', scannedCode: null },
+            { id: 'P3', name: '512GB 스토리지', expectedCode: 'PART-SSD-512G', location: 'U303', status: 'READY', scannedCode: null },
+            { id: 'P4', name: '전원 PMIC 칩', expectedCode: 'PART-PMIC-99', location: 'U404', status: 'READY', scannedCode: null }
           ]
         },
         'PRD-2026-A2': {
-          productName: 'PRD-2026-A2 차량용 인포테인먼트 IVI 모듈',
-          category: '자동차 전장',
+          productName: 'PRD-2026-A2 차량용 IVI 모듈',
           parts: [
-            {
-              id: 'PART-01',
-              name: '차량용 AP 제어 보드',
-              expectedCode: 'PART-AUTO-AP-9900',
-              spec: 'AEC-Q100 Grade 2 / 12-Core',
-              location: 'BOARD-A1',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-02',
-              name: 'CAN-FD 통신 트랜시버',
-              expectedCode: 'PART-CAN-FD-05M',
-              spec: 'Dual-CAN FD 5Mbps Isolation',
-              location: 'BOARD-COMM-01',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-03',
-              name: '오디오 DSP 앰프 칩',
-              expectedCode: 'PART-DSP-AMP-8CH',
-              spec: '8ch Hi-Fi DSP 192kHz/32bit',
-              location: 'AMP-SECTION-C',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            }
+            { id: 'P1', name: '차량 AP 제어보드', expectedCode: 'PART-AUTO-AP99', location: 'BRD-01', status: 'READY', scannedCode: null },
+            { id: 'P2', name: 'CAN-FD 통신칩', expectedCode: 'PART-CAN-FD05', location: 'COMM-01', status: 'READY', scannedCode: null },
+            { id: 'P3', name: '8CH 오디오 앰프', expectedCode: 'PART-DSP-AMP8', location: 'AMP-01', status: 'READY', scannedCode: null },
+            { id: 'P4', name: '전원 노이즈 필터', expectedCode: 'PART-PWR-FIL01', location: 'PWR-01', status: 'READY', scannedCode: null }
           ]
         },
         'PRD-2026-C3': {
-          productName: 'PRD-2026-C3 산업용 PLC 로직 컨트롤러',
-          category: '산업 제어',
+          productName: 'PRD-2026-C3 산업용 PLC 유닛',
           parts: [
-            {
-              id: 'PART-01',
-              name: '산업용 CPU 모듈',
-              expectedCode: 'PART-PLC-CPU-RTOS',
-              spec: 'Dual Cortex-M7 Realtime 480MHz',
-              location: 'SLOT-01',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-02',
-              name: '디지털 입력 절연 모듈',
-              expectedCode: 'PART-PLC-DI-16CH',
-              spec: '16채널 24VDC 광절연',
-              location: 'SLOT-02',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-03',
-              name: '릴레이 출력 제어 모듈',
-              expectedCode: 'PART-PLC-RO-8CH',
-              spec: '8채널 Relay 250VAC 5A',
-              location: 'SLOT-03',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-04',
-              name: 'EtherCAT 산업 이더넷 통신',
-              expectedCode: 'PART-ETH-CAT-100M',
-              spec: '100BASE-TX Dual Port Master',
-              location: 'SLOT-COMM',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            }
+            { id: 'P1', name: '산업용 CPU 모듈', expectedCode: 'PART-PLC-CPU', location: 'SLOT-01', status: 'READY', scannedCode: null },
+            { id: 'P2', name: '16CH 디지털입력', expectedCode: 'PART-PLC-DI16', location: 'SLOT-02', status: 'READY', scannedCode: null },
+            { id: 'P3', name: '8CH 릴레이출력', expectedCode: 'PART-PLC-RO08', location: 'SLOT-03', status: 'READY', scannedCode: null },
+            { id: 'P4', name: 'EtherCAT 통신', expectedCode: 'PART-ETH-CAT', location: 'SLOT-COMM', status: 'READY', scannedCode: null }
           ]
         }
       };
@@ -440,18 +269,16 @@
       let currentParts = JSON.parse(JSON.stringify(PRODUCT_DATABASE['PRD-2026-X1'].parts));
       let isSoundEnabled = true;
       let html5QrScanner = null;
-      let currentScanTarget = 'product'; // 'product', 'part-auto', or part index
+      let currentScanTarget = 'product';
       let targetPartIndex = null;
 
-      // 2. 사운드 효과 (Web Audio API)
+      // 2. 효과음 처리 (Web Audio API)
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
       function playSound(type) {
         if (!isSoundEnabled) return;
         try {
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
+          if (audioCtx.state === 'suspended') audioCtx.resume();
           const now = audioCtx.currentTime;
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
@@ -459,45 +286,44 @@
           gain.connect(audioCtx.destination);
 
           if (type === 'pass') {
-            // 경쾌한 승인 딩-동 (PASS)
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now); // D5
-            osc.frequency.setValueAtTime(880, now + 0.12); // A5
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.frequency.setValueAtTime(659.25, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
             osc.start(now);
-            osc.stop(now + 0.35);
+            osc.stop(now + 0.3);
+            if (navigator.vibrate) navigator.vibrate(70);
           } else if (type === 'fail') {
-            // 묵직한 경고 삐-익 (FAIL / MISMATCH)
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, now); // A3
-            osc.frequency.setValueAtTime(164.81, now + 0.15); // E3
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.setValueAtTime(146.83, now + 0.12);
             gain.gain.setValueAtTime(0.3, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
             osc.start(now);
-            osc.stop(now + 0.45);
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            osc.stop(now + 0.4);
+            if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
           } else if (type === 'complete') {
-            // 전체 조립 완료 팡파레
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
-            notes.forEach((freq, idx) => {
-              const noteOsc = audioCtx.createOscillator();
-              const noteGain = audioCtx.createGain();
-              noteOsc.connect(noteGain);
-              noteGain.connect(audioCtx.destination);
-              noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
-              noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
-              noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
-              noteOsc.start(now + idx * 0.1);
-              noteOsc.stop(now + idx * 0.1 + 0.3);
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((f, i) => {
+              const o = audioCtx.createOscillator();
+              const g = audioCtx.createGain();
+              o.connect(g);
+              g.connect(audioCtx.destination);
+              o.frequency.setValueAtTime(f, now + i * 0.08);
+              g.gain.setValueAtTime(0.2, now + i * 0.08);
+              g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+              o.start(now + i * 0.08);
+              o.stop(now + i * 0.08 + 0.25);
             });
+            if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
           }
         } catch (e) {
-          console.warn('Audio play error:', e);
+          console.warn('Audio err:', e);
         }
       }
 
-      // 3. 토스트 알림창 함수
+      // 3. 토스트 알림창
       function showToast(message, isSuccess = true) {
         const toast = document.getElementById('result-toast');
         const toastMsg = document.getElementById('toast-message');
@@ -505,21 +331,21 @@
 
         toastMsg.innerText = message;
         if (isSuccess) {
-          toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-base flex items-center gap-3 transition-all duration-300 opacity-100 translate-y-0 bg-emerald-600';
+          toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-black text-base flex items-center gap-3 transition-all duration-300 opacity-100 translate-y-0 bg-emerald-600';
           toastIcon.innerHTML = '✓';
         } else {
-          toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-base flex items-center gap-3 transition-all duration-300 opacity-100 translate-y-0 bg-rose-600';
+          toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-2xl text-white font-black text-base flex items-center gap-3 transition-all duration-300 opacity-100 translate-y-0 bg-rose-600 ring-2 ring-rose-300';
           toastIcon.innerHTML = '✕';
         }
 
         setTimeout(() => {
           toast.classList.add('opacity-0', 'translate-y-4');
-        }, 3200);
+        }, 2600);
       }
 
-      // 4. UI 렌더링 함수
+      // 4. 부품 카드 목록 렌더링 (화면 100% 핏)
       function renderPartList() {
-        const container = document.getElementById('part-card-list');
+        const container = document.getElementById('part-cards-container');
         container.innerHTML = '';
 
         let passCount = 0;
@@ -528,72 +354,77 @@
           if (part.status === 'PASS') passCount++;
 
           const card = document.createElement('div');
-          
-          let statusBorder = 'border-slate-200';
-          let statusBg = 'bg-white';
-          let statusBadge = '<span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-600">대기중</span>';
+
+          let cardStyle = 'border-slate-300 bg-slate-50/70';
+          let statusBadge = '<span class="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-black text-xs">대기중</span>';
+          let scanBtnColor = 'bg-blue-600 hover:bg-blue-700 text-white';
 
           if (part.status === 'PASS') {
-            statusBorder = 'border-emerald-400 ring-2 ring-emerald-200';
-            statusBg = 'bg-emerald-50/40';
-            statusBadge = '<span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-white flex items-center gap-1">✓ 사양일치</span>';
+            cardStyle = 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-300';
+            statusBadge = '<span class="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-black text-xs flex items-center gap-1 shadow-xs">✓ 일치 (OK)</span>';
+            scanBtnColor = 'bg-emerald-600 text-white';
           } else if (part.status === 'FAIL') {
-            statusBorder = 'border-rose-400 ring-2 ring-rose-200';
-            statusBg = 'bg-rose-50/40';
-            statusBadge = '<span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-500 text-white flex items-center gap-1">✕ 불일치(오장착)</span>';
+            cardStyle = 'border-rose-500 bg-rose-50/70 ring-2 ring-rose-300';
+            statusBadge = '<span class="px-2.5 py-0.5 rounded-md bg-rose-600 text-white font-black text-xs flex items-center gap-1 shadow-xs">✕ 불일치 (NG)</span>';
+            scanBtnColor = 'bg-rose-600 hover:bg-rose-700 text-white';
           }
 
-          card.className = `rounded-2xl p-4 border-2 transition-all flex flex-col justify-between shadow-xs ${statusBorder} ${statusBg}`;
+          card.className = `rounded-2xl p-3 border-2 transition-all flex flex-col justify-between overflow-hidden shadow-xs ${cardStyle}`;
 
           card.innerHTML = `
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">${part.location}</span>
-                ${statusBadge}
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1.5">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-200 text-slate-800 font-black text-[11px] font-mono">${part.location}</span>
+                  ${statusBadge}
+                </div>
+
+                <!-- 부품명 -->
+                <h3 class="text-base sm:text-lg font-black text-slate-900 leading-snug line-clamp-1">${part.name}</h3>
+
+                <!-- 품번 정보 박스 -->
+                <div class="mt-2 p-2 rounded-xl bg-white border border-slate-200 space-y-1 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-bold">요구</span>
+                    <span class="font-black text-slate-900 font-mono tracking-tight">${part.expectedCode}</span>
+                  </div>
+                  <div class="flex items-center justify-between border-t border-slate-100 pt-1">
+                    <span class="text-slate-400 font-bold">스캔</span>
+                    <span class="font-black font-mono tracking-tight ${part.scannedCode ? (part.status === 'PASS' ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-300'}">
+                      ${part.scannedCode || '미스캔'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <h4 class="text-base font-bold text-slate-800 break-words">${part.name}</h4>
-              <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${part.spec}</p>
+              <!-- 하단 스캔 버튼 (터치 최적화) -->
+              <div class="mt-2 pt-1 flex items-center gap-1.5">
+                <button
+                  onclick="window.openScannerModal('part', ${index})"
+                  class="flex-1 h-11 rounded-xl ${scanBtnColor} font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs touch-press"
+                >
+                  <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                  <span>QR스캔</span>
+                </button>
 
-              <div class="mt-3 p-2.5 bg-slate-100 rounded-xl space-y-1 text-xs">
-                <div class="flex justify-between items-center text-slate-600">
-                  <span class="font-medium">요구 품번:</span>
-                  <span class="font-bold text-slate-900 font-mono tracking-tight">${part.expectedCode}</span>
-                </div>
-                <div class="flex justify-between items-center ${part.scannedCode ? (part.status === 'PASS' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : 'text-slate-400'}">
-                  <span class="font-medium">스캔 품번:</span>
-                  <span class="font-mono tracking-tight">${part.scannedCode || '미스캔'}</span>
-                </div>
-                ${part.scanTime ? `<div class="text-[10px] text-right text-slate-400">스캔시각: ${part.scanTime}</div>` : ''}
+                <!-- 빠른 테스트 버튼 -->
+                <button
+                  onclick="window.quickSimulatePart(${index}, true)"
+                  class="h-11 px-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-black text-xs border border-emerald-300 touch-press"
+                  title="일치 테스트"
+                >
+                  OK
+                </button>
+                <button
+                  onclick="window.quickSimulatePart(${index}, false)"
+                  class="h-11 px-2.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-black text-xs border border-rose-300 touch-press"
+                  title="오류 테스트"
+                >
+                  NG
+                </button>
               </div>
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-              <button
-                onclick="window.openScannerModal('part', ${index})"
-                class="flex-1 h-12 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 touch-active transition-colors"
-              >
-                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
-                <span>단독 QR스캔</span>
-              </button>
-
-              <button
-                onclick="window.quickSimulatePart(${index}, true)"
-                title="정상 품번 일치 시뮬레이션"
-                class="h-12 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center touch-active border border-emerald-200"
-              >
-                일치TEST
-              </button>
-
-              <button
-                onclick="window.quickSimulatePart(${index}, false)"
-                title="불일치 오류 품번 시뮬레이션"
-                class="h-12 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center touch-active border border-rose-200"
-              >
-                불일치TEST
-              </button>
             </div>
           `;
 
@@ -606,8 +437,8 @@
         document.getElementById('progress-bar-fill').style.width = percent + '%';
         document.getElementById('progress-text').innerText = `${passCount} / ${total} (${percent}%)`;
 
-        // 모든 부품 PASS 시 축하 배너 노출
-        const banner = document.getElementById('all-pass-banner');
+        // 완료 배너
+        const banner = document.getElementById('complete-banner');
         if (total > 0 && passCount === total) {
           banner.classList.remove('hidden');
           playSound('complete');
@@ -616,218 +447,165 @@
         }
       }
 
-      // 5. 검사 로직: QR코드로 들어온 품번과 부품 검증
+      // 5. 검사 판별 로직
       function verifyScannedCode(scannedCode, specificIndex = null) {
         if (!scannedCode) return;
         const cleanCode = scannedCode.trim().toUpperCase();
-        const nowTime = new Date().toLocaleTimeString('ko-KR', { hour12: false });
 
-        // 1) 특정 부품 단독 검증 모드인 경우
         if (specificIndex !== null && currentParts[specificIndex]) {
           const part = currentParts[specificIndex];
           part.scannedCode = cleanCode;
-          part.scanTime = nowTime;
 
           if (part.expectedCode.toUpperCase() === cleanCode) {
             part.status = 'PASS';
             playSound('pass');
-            showToast(`[일치 PASS] ${part.name} 사양이 정상 일치합니다.`, true);
+            showToast(`[일치 OK] ${part.name} 정상 검증!`, true);
           } else {
             part.status = 'FAIL';
             playSound('fail');
-            showToast(`[불일치 경고] ${part.name} 사양 불일치! (스캔: ${cleanCode} / 요구: ${part.expectedCode})`, false);
+            showToast(`[불일치 NG] ${part.name} 규격 불일치!`, false);
           }
           renderPartList();
           return;
         }
 
-        // 2) 부품 연속 자동 매칭 검증 모드
-        // 아직 대기중(READY)이거나 불일치(FAIL)인 부품 중 일치하는 것이 있는지 먼저 탐색
+        // 연속 스캔 자동 매칭
         let matchIndex = currentParts.findIndex(p => p.expectedCode.toUpperCase() === cleanCode && p.status !== 'PASS');
-
         if (matchIndex !== -1) {
           const part = currentParts[matchIndex];
           part.scannedCode = cleanCode;
-          part.scanTime = nowTime;
           part.status = 'PASS';
           playSound('pass');
-          showToast(`[일치 PASS] ${part.name} 부품이 확인되었습니다.`, true);
+          showToast(`[일치 OK] ${part.name} 일치 확인!`, true);
           renderPartList();
           return;
         }
 
-        // 이미 완료된 부품을 다시 찍었는지 확인
-        const alreadyDoneIndex = currentParts.findIndex(p => p.expectedCode.toUpperCase() === cleanCode && p.status === 'PASS');
-        if (alreadyDoneIndex !== -1) {
-          showToast(`[이미 완료] ${currentParts[alreadyDoneIndex].name}는 이미 검증 완료된 부품입니다.`, true);
+        const doneIndex = currentParts.findIndex(p => p.expectedCode.toUpperCase() === cleanCode && p.status === 'PASS');
+        if (doneIndex !== -1) {
+          showToast(`[완료] 이미 검증된 부품입니다: ${currentParts[doneIndex].name}`, true);
           return;
         }
 
-        // 어떤 부품의 품번과도 일치하지 않는 경우 -> 불일치 처리
         playSound('fail');
-        showToast(`[불일치 NG] 입력된 품번 [${cleanCode}]은(는) 현재 제품의 조립 부품 목록에 없습니다!`, false);
+        showToast(`[오장착 NG] 목록에 없는 부품: ${cleanCode}`, false);
       }
 
       // ==========================================
       // 전역 window 바인딩 함수 (규칙 준수)
       // ==========================================
 
-      // 효과음 토글
       window.toggleSound = function() {
         isSoundEnabled = !isSoundEnabled;
         const icon = document.getElementById('icon-sound-on');
         const text = document.getElementById('txt-sound-state');
         if (isSoundEnabled) {
-          text.innerText = '효과음 ON';
+          text.innerText = '효과음';
           icon.classList.remove('text-slate-400');
           icon.classList.add('text-blue-600');
           playSound('pass');
         } else {
-          text.innerText = '효과음 OFF';
+          text.innerText = '음소거';
           icon.classList.remove('text-blue-600');
           icon.classList.add('text-slate-400');
         }
       };
 
-      // 입력창 지우기
       window.clearProductInput = function() {
-        document.getElementById('product-code-input').value = '';
-        document.getElementById('product-code-input').focus();
+        const inp = document.getElementById('product-code-input');
+        inp.value = '';
+        inp.focus();
       };
 
-      // 예시 품번 드롭다운 열기/닫기
-      window.togglePresetMenu = function() {
-        const dropdown = document.getElementById('preset-dropdown');
-        dropdown.classList.toggle('hidden');
+      window.openProductSelectModal = function() {
+        const modal = document.getElementById('product-select-modal');
+        const listDiv = document.getElementById('product-list-options');
+        listDiv.innerHTML = '';
+
+        Object.keys(PRODUCT_DATABASE).forEach(code => {
+          const item = PRODUCT_DATABASE[code];
+          const btn = document.createElement('button');
+          btn.className = `w-full h-14 p-3 rounded-xl font-black text-left flex items-center justify-between border-2 touch-press ${code === currentProductCode ? 'bg-blue-50 border-blue-600 text-blue-900' : 'bg-slate-50 border-slate-200 text-slate-800'}`;
+          btn.innerHTML = `
+            <div>
+              <div class="text-[11px] text-blue-600 font-bold">${code}</div>
+              <div class="text-sm font-black">${item.productName}</div>
+            </div>
+            <span class="text-xs font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-300">${item.parts.length}개 부품</span>
+          `;
+          btn.onclick = () => {
+            window.selectProduct(code);
+            window.closeProductSelectModal();
+          };
+          listDiv.appendChild(btn);
+        });
+
+        modal.showModal();
       };
 
-      // 예시 품번 선택
-      window.selectPreset = function(code) {
+      window.closeProductSelectModal = function() {
+        const modal = document.getElementById('product-select-modal');
+        if (modal.open) modal.close();
+      };
+
+      window.selectProduct = function(code) {
         document.getElementById('product-code-input').value = code;
-        window.togglePresetMenu();
         window.loadProductParts();
       };
 
-      // 품번 적용 로직
       window.loadProductParts = function() {
-        const inputVal = document.getElementById('product-code-input').value.trim().toUpperCase();
-        if (!inputVal) {
-          showToast('제품 품번을 입력하거나 QR을 스캔하세요.', false);
+        const code = document.getElementById('product-code-input').value.trim().toUpperCase();
+        if (!code) {
+          showToast('제품 품번을 입력하거나 스캔해주세요.', false);
           return;
         }
 
-        if (PRODUCT_DATABASE[inputVal]) {
-          currentProductCode = inputVal;
-          const prod = PRODUCT_DATABASE[inputVal];
-          document.getElementById('current-prod-id').innerText = inputVal;
+        if (PRODUCT_DATABASE[code]) {
+          currentProductCode = code;
+          const prod = PRODUCT_DATABASE[code];
           document.getElementById('current-prod-name').innerText = prod.productName;
           currentParts = JSON.parse(JSON.stringify(prod.parts));
           renderPartList();
           playSound('pass');
-          showToast(`제품 [${inputVal}] 부품 리스트 로드 완료 (${currentParts.length}개 품목)`, true);
+          showToast(`제품 [${code}] 부품 목록 로드 완료`, true);
         } else {
-          // 등록되지 않은 품번인 경우 기본 가상 템플릿 생성 지원
-          currentProductCode = inputVal;
-          document.getElementById('current-prod-id').innerText = inputVal;
-          document.getElementById('current-prod-name').innerText = `사용자 지정 품번: ${inputVal}`;
+          currentProductCode = code;
+          document.getElementById('current-prod-name').innerText = `사용자 제품 (${code})`;
           currentParts = [
-            {
-              id: 'PART-01',
-              name: '메인 제어 보드 모듈',
-              expectedCode: `${inputVal}-CTRL-A`,
-              spec: '표준 제어 유닛',
-              location: 'LOC-MAIN-01',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-02',
-              name: '전원 공급 SMPS 모듈',
-              expectedCode: `${inputVal}-PWR-24V`,
-              spec: '24V 5A High-Power Unit',
-              location: 'LOC-PWR-01',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            },
-            {
-              id: 'PART-03',
-              name: 'I/O 센서 인터페이스',
-              expectedCode: `${inputVal}-SEN-01`,
-              spec: 'Multi Interface Channel',
-              location: 'LOC-SEN-01',
-              qty: 1,
-              status: 'READY',
-              scannedCode: null,
-              scanTime: null
-            }
+            { id: 'P1', name: '메인 제어 보드', expectedCode: `${code}-MAIN`, location: 'LOC-01', status: 'READY', scannedCode: null },
+            { id: 'P2', name: '전원 공급 모듈', expectedCode: `${code}-PWR`, location: 'LOC-02', status: 'READY', scannedCode: null },
+            { id: 'P3', name: '센서 인터페이스', expectedCode: `${code}-SEN`, location: 'LOC-03', status: 'READY', scannedCode: null }
           ];
           renderPartList();
           playSound('pass');
-          showToast(`신규 품번 [${inputVal}] 임시 부품 목록이 자동 생성되었습니다.`, true);
+          showToast(`신규 품번 [${code}] 생성 완료`, true);
         }
       };
 
-      // 전체 초기화
       window.resetCurrentCheck = function() {
-        if (confirm('현재 작업 중인 부품 검사 상태를 모두 초기화하시겠습니까?')) {
+        if (confirm('부품 검사 상태를 리셋하시겠습니까?')) {
           if (PRODUCT_DATABASE[currentProductCode]) {
             currentParts = JSON.parse(JSON.stringify(PRODUCT_DATABASE[currentProductCode].parts));
           } else {
-            currentParts.forEach(p => {
-              p.status = 'READY';
-              p.scannedCode = null;
-              p.scanTime = null;
-            });
+            currentParts.forEach(p => { p.status = 'READY'; p.scannedCode = null; });
           }
           renderPartList();
-          showToast('검사 상태가 초기화되었습니다.', true);
+          showToast('초기화되었습니다.', true);
         }
       };
 
-      // 부품 검사 상태만 초기화
-      window.resetOnlyPartStatus = function() {
-        currentParts.forEach(p => {
-          p.status = 'READY';
-          p.scannedCode = null;
-          p.scanTime = null;
-        });
-        renderPartList();
-        showToast('부품 검사 상태가 리셋되었습니다.', true);
-      };
-
-      // 스캐너 건 입력 검사
-      window.verifyPartByInput = function() {
-        const input = document.getElementById('part-barcode-gun-input');
-        const code = input.value.trim();
-        if (!code) {
-          showToast('부품 품번을 입력하거나 스캔해주세요.', false);
-          input.focus();
-          return;
-        }
-        verifyScannedCode(code);
-        input.value = '';
-        input.focus();
-      };
-
-      // 단독 부품 시뮬레이션
       window.quickSimulatePart = function(index, isCorrect) {
         const part = currentParts[index];
         if (!part) return;
-        const codeToTest = isCorrect ? part.expectedCode : `${part.expectedCode}-WRONG-99`;
-        verifyScannedCode(codeToTest, index);
+        const code = isCorrect ? part.expectedCode : `${part.expectedCode}-ERR`;
+        verifyScannedCode(code, index);
       };
 
-      // 공정 완료 승인 버튼
-      window.finishAssemblyProcess = function() {
+      window.confirmNextStage = function() {
         playSound('complete');
-        alert(`[공정 승인 완료]\n제품 품번: ${currentProductCode}\n총 ${currentParts.length}개 부품의 사양 일치 검증이 성공적으로 완료되었습니다.\n다음 공정으로 인계합니다.`);
+        alert(`[공정 승인 완료]\n제품: ${currentProductCode}\n모든 부품이 성공적으로 검증되었습니다.`);
       };
 
-      // 6. QR 카메라 모달 조작 및 스캐너 제어
       window.openScannerModal = function(targetType, partIdx = null) {
         currentScanTarget = targetType;
         targetPartIndex = partIdx;
@@ -841,36 +619,33 @@
 
         if (targetType === 'product') {
           title.innerText = '제품 품번 QR 스캔';
-          desc.innerText = '제품 라벨에 부착된 QR 코드를 카메라 렌즈에 비춰주세요.';
-          // 시뮬레이션 버튼 추가
+          desc.innerText = '제품 라벨의 QR 코드를 프레임 안에 맞추세요.';
           simBtns.innerHTML = `
-            <button onclick="window.simulateScanResult('PRD-2026-X1')" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold touch-active">PRD-2026-X1 인식</button>
-            <button onclick="window.simulateScanResult('PRD-2026-A2')" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold touch-active">PRD-2026-A2 인식</button>
-            <button onclick="window.simulateScanResult('PRD-2026-C3')" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold touch-active">PRD-2026-C3 인식</button>
+            <button onclick="window.simulateScanResult('PRD-2026-X1')" class="h-10 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-xl font-black text-xs touch-press">PRD-2026-X1 인식</button>
+            <button onclick="window.simulateScanResult('PRD-2026-A2')" class="h-10 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-xl font-black text-xs touch-press">PRD-2026-A2 인식</button>
           `;
         } else if (targetType === 'part-auto') {
           title.innerText = '부품 연속 QR 스캔';
-          desc.innerText = '조립할 부품의 QR코드를 비추면 목록에서 자동으로 일치 여부를 판별합니다.';
-          // 시뮬레이션 버튼
-          currentParts.forEach((p, idx) => {
+          desc.innerText = '조립할 부품의 QR 코드를 차례대로 비춰주세요.';
+          currentParts.forEach(p => {
             const btn = document.createElement('button');
-            btn.className = 'px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold touch-active';
-            btn.innerText = `${p.name} 정상 QR`;
+            btn.className = 'h-10 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 rounded-xl font-black text-xs touch-press truncate px-2';
+            btn.innerText = `${p.name} 일치`;
             btn.onclick = () => window.simulateScanResult(p.expectedCode);
             simBtns.appendChild(btn);
           });
           const wrongBtn = document.createElement('button');
-          wrongBtn.className = 'px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-xs font-bold touch-active';
-          wrongBtn.innerText = '오장착(불일치) QR 테스트';
-          wrongBtn.onclick = () => window.simulateScanResult('PART-INVALID-XYZ-999');
+          wrongBtn.className = 'h-10 bg-rose-100 hover:bg-rose-200 text-rose-900 rounded-xl font-black text-xs touch-press';
+          wrongBtn.innerText = '불일치(NG) 테스트';
+          wrongBtn.onclick = () => window.simulateScanResult('WRONG-CODE-999');
           simBtns.appendChild(wrongBtn);
         } else if (targetType === 'part' && partIdx !== null) {
           const part = currentParts[partIdx];
-          title.innerText = `[${part.name}] QR 스캔`;
-          desc.innerText = `요구 품번: ${part.expectedCode}의 QR코드를 카메라에 비춰주세요.`;
+          title.innerText = `[${part.name}] 스캔`;
+          desc.innerText = `요구 규격: ${part.expectedCode}`;
           simBtns.innerHTML = `
-            <button onclick="window.simulateScanResult('${part.expectedCode}')" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold touch-active">정상 일치 품번 QR</button>
-            <button onclick="window.simulateScanResult('${part.expectedCode}-MISMATCH')" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-xs font-bold touch-active">불일치 오류 품번 QR</button>
+            <button onclick="window.simulateScanResult('${part.expectedCode}')" class="h-10 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 rounded-xl font-black text-xs touch-press">정상 일치 (OK)</button>
+            <button onclick="window.simulateScanResult('${part.expectedCode}-ERR')" class="h-10 bg-rose-100 hover:bg-rose-200 text-rose-900 rounded-xl font-black text-xs touch-press">불일치 (NG)</button>
           `;
         }
 
@@ -884,45 +659,33 @@
         if (modal.open) modal.close();
       };
 
-      // 시뮬레이션 버튼 클릭 핸들러
-      window.simulateScanResult = function(simulatedText) {
-        handleQrDetected(simulatedText);
+      window.simulateScanResult = function(text) {
+        handleQrDetected(text);
         window.closeScannerModal();
       };
 
-      // 카메라 시작
       function startCameraScanner() {
-        if (typeof Html5Qrcode === 'undefined') {
-          console.warn('html5-qrcode 라이브러리가 로드되지 않았습니다.');
-          return;
-        }
-
-        if (html5QrScanner) {
-          stopCameraScanner();
-        }
+        if (typeof Html5Qrcode === 'undefined') return;
+        if (html5QrScanner) stopCameraScanner();
 
         html5QrScanner = new Html5Qrcode("camera-reader");
-        const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
         html5QrScanner.start(
           { facingMode: "environment" },
           config,
           (decodedText) => {
-            // QR 코드 인식 성공 시
             handleQrDetected(decodedText);
-            // 연속 스캔이 아니거나 제품 품번 스캔인 경우 닫기
             if (currentScanTarget !== 'part-auto') {
               window.closeScannerModal();
             }
           },
-          (errorMessage) => {
-            // 프레임 탐색 중 (에러 무시)
-          }
+          () => {}
         ).catch(err => {
-          console.warn("Camera start failed:", err);
+          console.warn("Camera start err:", err);
           document.getElementById('scanner-modal-desc').innerHTML = `
-            <span class="text-rose-600 font-bold">카메라 권한을 확인해주세요. (HTTPS 환경 또는 로컬호스트 권장)</span><br>
-            <span class="text-slate-500 text-xs">터치 환경에서는 하단의 시뮬레이션 버튼이나 스캐너 건 입력을 사용하실 수 있습니다.</span>
+            <span class="text-rose-600 font-bold">카메라 권한을 확인해주세요.</span><br>
+            <span class="text-xs text-slate-500">터치 환경에서는 시뮬레이션 버튼 또는 스캐너 건을 사용할 수 있습니다.</span>
           `;
         });
       }
@@ -932,14 +695,12 @@
           html5QrScanner.stop().then(() => {
             html5QrScanner.clear();
             html5QrScanner = null;
-          }).catch(err => {
-            console.warn("Camera stop failed:", err);
+          }).catch(() => {
             html5QrScanner = null;
           });
         }
       }
 
-      // QR 스캔 성공 핸들러
       function handleQrDetected(text) {
         if (!text) return;
         const scanned = text.trim();
@@ -954,13 +715,11 @@
         }
       }
 
-      // 7. 바코드 스캐너 건 엔터(Enter) 키보드 이벤트 리스너
+      // 초기화 및 리스너 등록
       document.addEventListener('DOMContentLoaded', () => {
-        // 기본 렌더링
         document.getElementById('product-code-input').value = currentProductCode;
         renderPartList();
 
-        // 제품 품번 인풋에서 Enter 키 누를 시 자동 로드
         document.getElementById('product-code-input').addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -968,29 +727,40 @@
           }
         });
 
-        // 부품 스캐너 건 인풋에서 Enter 키 누를 시 자동 검사
-        document.getElementById('part-barcode-gun-input').addEventListener('keydown', (e) => {
+        // 전역 스캐너 건 키보드 버퍼 리스너
+        let barcodeBuffer = '';
+        let lastKeyTime = Date.now();
+
+        document.addEventListener('keydown', (e) => {
+          const activeEl = document.activeElement;
+          if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+            return;
+          }
+
+          const currentTime = Date.now();
+          if (currentTime - lastKeyTime > 150) {
+            barcodeBuffer = '';
+          }
+          lastKeyTime = currentTime;
+
           if (e.key === 'Enter') {
-            e.preventDefault();
-            window.verifyPartByInput();
+            if (barcodeBuffer.length >= 3) {
+              verifyScannedCode(barcodeBuffer);
+            }
+            barcodeBuffer = '';
+          } else if (e.key.length === 1) {
+            barcodeBuffer += e.key;
           }
         });
 
-        // 팝업 외부 클릭 시 닫기
-        const modal = document.getElementById('scanner-modal');
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            window.closeScannerModal();
-          }
+        const scanModal = document.getElementById('scanner-modal');
+        scanModal.addEventListener('click', (e) => {
+          if (e.target === scanModal) window.closeScannerModal();
         });
 
-        // 드롭다운 외부 클릭 시 닫기
-        document.addEventListener('click', (e) => {
-          const btn = document.getElementById('btn-sample-preset');
-          const dropdown = document.getElementById('preset-dropdown');
-          if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.add('hidden');
-          }
+        const prodModal = document.getElementById('product-select-modal');
+        prodModal.addEventListener('click', (e) => {
+          if (e.target === prodModal) window.closeProductSelectModal();
         });
       });
     </script>
